@@ -1,0 +1,26 @@
+from setuptools import setup
+
+setup(name='pytest-scenario',
+      version='1.0',
+      description='pytest plugin for test scenarios',
+      author='Ori Menashe',
+      author_email='orim@live.com',
+      url='https://github.com/OriMenashe/pytest-scenario',
+      download_url='https://github.com/OriMenashe/pytest-scenario/tarball/1.0',
+      packages=['pytest_scenario'],
+      entry_points={'pytest11': ['scenario = pytest_scenario.plugin']},
+      install_requires=['pytest>=2.3', 'pyfiglet==0.7.5'],
+      license='MIT',
+      keywords=['testing', 'py.test', 'pytest', 'scenario'],
+      classifiers=[
+          'Development Status :: 3 - Alpha',
+          'Intended Audience :: Developers',
+          'Operating System :: POSIX',
+          'Operating System :: Microsoft :: Windows',
+          'Operating System :: MacOS :: MacOS X',
+          'Topic :: Software Development :: Quality Assurance',
+          'Topic :: Software Development :: Testing',
+          'Topic :: Utilities',
+          'Programming Language :: Python',
+          'Programming Language :: Python ::>=3.3'],
+      )
