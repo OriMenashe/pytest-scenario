@@ -38,7 +38,6 @@ Quickstart
 - Test parameterization is done by using a new **test_case** marker as follows:
 
 .. code-block:: python
-   :emphasize-lines: 13
    
    @pytest.fixture
    def db1(request):
