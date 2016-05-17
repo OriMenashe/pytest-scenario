@@ -20,7 +20,7 @@ def pytest_configure(config):
         scenario_name = config.option.scenario_name
 
         config._scenario = TestScenarioRunner(scenario_name)
-        config.pluginmanager.register(config._scenario, name=scenario_name, prepend=True)
+        config.pluginmanager.register(config._scenario, name=scenario_name)
     else:
         # Register "test_case" markers.
         config_line = (
@@ -28,7 +28,7 @@ def pytest_configure(config):
         )
         config.addinivalue_line('markers', config_line)
         config._scenario = TestCaseRunner()
-        config.pluginmanager.register(config._scenario, name='test_case_runner', prepend=True)
+        config.pluginmanager.register(config._scenario, name='test_case_runner')
 
 
 def pytest_unconfigure(config):
