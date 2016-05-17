@@ -111,9 +111,4 @@ Invocation of a test scenario will be done as follows:
 License
 -------
 
-.. raw:: html
-	
-   
-	The project is licensed under the  <span><a href="http://www.wtfpl.net/"><img
-		       src="http://www.wtfpl.net/wp-content/uploads/2012/12/wtfpl-badge-1.png"
-		       width="80" height="15" alt="WTFPL" /></a></span>  license.
+The project is licensed under the WTFPL license.
