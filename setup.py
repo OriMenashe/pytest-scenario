@@ -10,7 +10,7 @@ setup(name='pytest-scenario',
       packages=['pytest_scenario'],
       entry_points={'pytest11': ['scenario = pytest_scenario.plugin']},
       install_requires=['pytest>=2.3', 'pyfiglet==0.7.5'],
-      license='MIT',
+      license='WTFPL',
       keywords=['testing', 'py.test', 'pytest', 'scenario'],
       classifiers=[
           'Development Status :: 3 - Alpha',

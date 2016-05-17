@@ -1,6 +1,11 @@
 .. |project| replace:: pytest-scenario
 .. |author| replace:: OriMenashe
+.. raw:: html
 
+    <embed>
+		<a href="https://github.com/OriMenashe"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"></a>
+    </embed>
+	
 |project|: parameterized test case instances and test scenarios.
 ====================================================================
 
@@ -111,4 +116,9 @@ Invocation of a test scenario will be done as follows:
 License
 -------
 
-The project is licensed under the MIT license.
+.. raw:: html
+	
+   
+	The project is licensed under the  <span><a href="http://www.wtfpl.net/"><img
+		       src="http://www.wtfpl.net/wp-content/uploads/2012/12/wtfpl-badge-1.png"
+		       width="80" height="15" alt="WTFPL" /></a></span>  license.
