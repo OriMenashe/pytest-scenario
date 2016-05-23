@@ -19,6 +19,8 @@ Features
 
 - Test parameterization (including fixtures and test arguments).
 
+- Fixture parameterization on a test level.
+
 - Test instantiation - run multiple test instances with different parameters.
  
 - Test ordering - running tests in a thoughtful, user-defined order.
@@ -38,78 +40,83 @@ Install |project| by running:
 Quickstart
 ----------
 
-- Test parameterization is done by using a new **test_case** marker as follows:
+*	Test parameterization is done by using a new **test_case** marker as follows:
 
-.. code-block:: python
-   
-   @pytest.fixture
-   def db1(request):
-       # connect to db1 database server...
-       return db1
+	.. literalinclude:: ../tests/test_parametrize.py
+		:language: python
+		:lines: 5-45
+		:emphasize-lines: 18-30
 
-   @pytest.fixture
-   def db2(request):
-       # connect to db2 database server...
-       return db2
-   
-   class TestDBIntegrity:
-   
-       @pytest.mark.test_case(fixture_binding=[('db', 'db1', 'session')], params=[('table', 'USERS'), ('field_name', 'user_name'), ('field_value', 'orim')])
-       def test_value_exists(self, db, table, field_name, field_value):
-              # Query USERS table inside db1 for a user named orim.
-              assert db.query("SELECT * from {} WHERE '{}'=={};").format(table, field_name, field_value)
-
-- Test scenario is a JSON file located at the root of your project at <projects_root>/sut/scenarios/**<scenario_name>.json** :
-
-
-.. code-block:: json
+	*	Output:
 	
-	[
-	    {
-	        "id": 1,
-	        "module_name": "tests.db_tests",
-	        "class_name": "TestDBIntegrity",
-	        "test_name": "test_value_exists",
-	        "fixture_binding": {
-	            "db": [
-	                "db1",
-	                "session"
-	            ]
-	        },
-	        "params": {
-	            "table": "USERS",
-	            "field_name": "user_name",
-	            "field_value": "orim"
-	        },
-	        "skip": false,
-	        "xfail": false
-	    },
-	    {
-	        "id": 2,
-	        "module_name": "tests.db_tests",
-	        "class_name": "TestDBIntegrity",
-	        "test_name": "test_value_exists",
-	        "fixture_binding": {
-	            "db": [
-	                "db2",
-	                "session"
-	            ]
-	        },
-	        "params": {
-	            "table": "USERS",
-	            "field_name": "user_name",
-	            "field_value": "miked"
-	        },
-	        "skip": false,
-	        "xfail": false
-	    },
-	]
+	.. code-block:: bash
+		
+    		first_fixture_place_holder: 100
+    		second_fixture_place_holder: Hello World
+    		third_fixture_place_holder: I am not parametrized
+    		test_param: 1.04
+    		PASSED
+    		====================================== test_fixture_param_persistency finished ======================================
+
+	Another test can benefit from privious parameterization if defined in the same scope, i.e.:
 	
-Invocation of a test scenario will be done as follows:
+	.. literalinclude:: ../tests/test_parametrize.py
+		:language: python
+		:lines: 47-51
+		:emphasize-lines: 1
 
-.. code-block:: shell
+	*	Output:
+	
+	.. code-block:: bash
+		
+    		fixture_place_holder param: Hello World
+    		PASSED
+    		====================================== test_fixture_param_persistency finished ======================================
 
-	~/workspace/projects_root$ py.test tests/ --scenario=<scenario_name>
+*	Test scenario is represented by a JSON file located at:
+ 	<projects_root>/sut/scenarios/**<scenario_name>.json**
+
+	.. literalinclude:: ../sut/scenarios/my scenario.json
+		:language: json
+	
+	*	Invocation of a test scenario will be done as follows:
+
+	.. code-block:: shell
+		
+		~/workspace/projects_root$ py.test tests/ --scenario=<scenario_name>
+	
+	*	Output:
+	
+	.. code-block:: bash
+
+    		collected 3 items 
+    		selected scenario: 
+    		                                                 _       
+    		 _ __ ___  _   _   ___  ___ ___ _ __   __ _ _ __(_) ___  
+    		| '_ ` _ \| | | | / __|/ __/ _ \ '_ \ / _` | '__| |/ _ \ 
+    		| | | | | | |_| | \__ \ (_|  __/ | | | (_| | |  | | (_) |
+    		|_| |_| |_|\__, | |___/\___\___|_| |_|\__,_|_|  |_|\___/ 
+    		           |___/                                         
+    		
+    		tests/test_parametrize.py::TestParametrize::test_scenario_instantiation[1] 
+    		
+    		Hello World
+    		PASSED
+    		====================================== test_scenario_instantiation[1] finished ======================================
+    		    		
+    		
+    		tests/test_parametrize.py::TestParametrize::test_scenario_instantiation[2] 
+    		
+    		Hello Bob
+    		PASSED
+    		====================================== test_scenario_instantiation[2] finished ======================================
+    		
+    		
+    		tests/test_parametrize.py::TestParametrize::test_scenario_instantiation[3] 
+    		
+    		Bye Bob
+    		PASSED
+    		====================================== test_scenario_instantiation[3] finished ======================================
 
 License
 -------

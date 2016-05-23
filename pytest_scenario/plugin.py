@@ -3,6 +3,7 @@ import re
 import pytest
 import json
 import inspect
+from attrdict import AttrDict
 from pyfiglet import figlet_format
 from pytest_scenario.exceptions import ImproperlyConfigured
 from os.path import abspath
@@ -56,11 +57,11 @@ class BaseRunner(object):
                     fully_qualified_name = '.'.join([item.module.__name__, item.cls.__name__, item.name])
                     fixture_binding_dict = self.test_arg_fixture_binding_dict[fully_qualified_name]
                     for argname, fixture_config in fixture_binding_dict.items():
-                        fixture, scope = fixture_config
-                        _, arg2fixturedefs = item.session._fixturemanager.getfixtureclosure([fixture], item)
-                        if scope:
-                            arg2fixturedefs[fixture][0].scope = scope
-                        item._fixtureinfo.name2fixturedefs[fixture] = arg2fixturedefs[fixture]
+                        func, _, fixture_params = fixture_config
+                        _, arg2fixturedefs = item.session._fixturemanager.getfixtureclosure([func], item)
+                        if fixture_params:
+                            item._request._pyfuncitem.callspec.params[func] = AttrDict(fixture_params)
+                        item._fixtureinfo.name2fixturedefs[func] = arg2fixturedefs[func]
                         if argname in item.fixturenames:
                             self.item_setup_dict[item.nodeid] = item
             except KeyError:
@@ -75,9 +76,13 @@ class BaseRunner(object):
             fully_qualified_name = '.'.join([item.module.__name__, item.cls.__name__, item.name])
             fixture_binding_dict = self.test_arg_fixture_binding_dict[fully_qualified_name]
             for argname, fixture_config in fixture_binding_dict.items():
-                fixture, _ = fixture_config
-                item._request._get_active_fixturedef(fixture)
-                item.funcargs[argname] = item._request._funcargs[fixture]
+                func, scope, _ = fixture_config
+                _, arg2fixturedefs = item.session._fixturemanager.getfixtureclosure([func], item)
+                fixture_def = arg2fixturedefs[func][0]
+                if scope and fixture_def.scope != scope:
+                    fixture_def.finish()
+                    fixture_def.scope = scope
+                item.funcargs[argname] = item._request.getfuncargvalue(func)
         except KeyError as e:
             raise RuntimeError("unable to find a fixture function named {}".format(e))
 
@@ -99,44 +104,51 @@ class TestCaseRunner(BaseRunner):
         if hasattr(metafunc.function, "test_case"):
             self.id_counter += 1
             argnames = []
-            argvalues = []
             values = []
             try:
-                params = metafunc.function.test_case.kwargs['params']
-                for argname, _ in params:
+                test_params = metafunc.function.test_case.kwargs['test_params']
+                for argname, _ in test_params:
                     if argname in metafunc.fixturenames:
                         argnames.append(argname)
                     else:
                         raise ImproperlyConfigured(
                             "'{}' is not a valid argument for {}".format(argname, fully_qualified_name))
-                values = [argvalue for _, argvalue in params]
+                values = [argvalue for _, argvalue in test_params]
             except KeyError:
                 pass
             try:
                 fixture_binding = metafunc.function.test_case.kwargs['fixture_binding']
                 instance_id = '%s[%d]' % (fully_qualified_name, self.id_counter)
                 try:
-                    for argname, fixture, scope in fixture_binding:
+                    for argname, fixture_config in fixture_binding:
                         try:
-                            self.test_arg_fixture_binding_dict[instance_id][argname] = (fixture, scope)
+                            func = fixture_config['func']
+                            scope = fixture_config.get('scope', None)
+                            params = fixture_config.get('params', None)
+                        except KeyError as e:
+                            raise ImproperlyConfigured(
+                                "missing '{}' key in while trying to bind a fixture to test param: "
+                                "(test_param, {func='your fixture', scope='function \ class \ module \ session'})"
+                                .format(e))
+                        try:
+                            self.test_arg_fixture_binding_dict[instance_id][argname] = (func, scope, params)
                         except KeyError:
                             self.test_arg_fixture_binding_dict[instance_id] = {}
-                            self.test_arg_fixture_binding_dict[instance_id][argname] = (fixture, scope)
+                            self.test_arg_fixture_binding_dict[instance_id][argname] = (func, scope, params)
                         if argname in metafunc.fixturenames:
-                            values.insert(0, fixture)
+                            values.insert(0, func)
                             if argname not in argnames:
                                 argnames.insert(0, argname)
                         else:
                             raise ImproperlyConfigured(
                                 "'{}' is not a valid argument for {}".format(argname, fully_qualified_name))
-                    argvalues.append(values)
                 except ValueError:
                     raise ImproperlyConfigured(
-                        "\n{} - fixture_binding member should be a tuple of size 3: "
-                        "(argname, fixture, scope)".format(fully_qualified_name))
+                        "\n{} - fixture_binding attribute should be a tuple containing at least 3 elements: "
+                        "(argname, fixture, scope, params=None)".format(fully_qualified_name))
             except KeyError:
                 pass
-            metafunc.parametrize(argnames, argvalues, ids=[self.id_counter], scope="function")
+            metafunc.parametrize(argnames, [values], ids=[self.id_counter], scope="function")
 
 
 class TestScenarioRunner(BaseRunner):
@@ -197,6 +209,7 @@ class TestScenarioRunner(BaseRunner):
                     item.add_marker(pytest.mark.skipif)
                 else:
                     item.keywords['skipif'] = None
+                    item.keywords['skip'] = None
                 if test['xfail']:
                     item.add_marker(pytest.mark.xfail)
                 else:
@@ -234,7 +247,7 @@ class TestScenarioRunner(BaseRunner):
         argnames = []
         argvalues = []
         try:
-            params = test_instances[0][1]['params'].items()
+            params = test_instances[0][1]['test_params'].items()
         except KeyError:
             raise ImproperlyConfigured('missing params field in {} configuration'.format(test_instances[0]))
         for argname, _ in params:
@@ -245,20 +258,23 @@ class TestScenarioRunner(BaseRunner):
         for instance_id, test_config in test_instances:
             try:
                 idlist.append(test_config['id'])
-                values = [x[1] for x in test_config['params'].items()]
+                values = [x[1] for x in test_config['test_params'].items()]
                 fixture_binding = test_config['fixture_binding']
                 for argname, fixture_config in fixture_binding.items():
-                    if len(fixture_config) != 2:
-                        raise ImproperlyConfigured(
-                            "\n{} - fixture_binding member should be a list of size 2: "
-                            "[fixture, scope]".format(fully_qualified_name))
                     try:
-                        self.test_arg_fixture_binding_dict[instance_id][argname] = fixture_config
+                        func = fixture_config['func']
+                        scope = fixture_config.get('scope', None)
+                        params = fixture_config.get('params', None)
+                    except KeyError as e:
+                            raise ImproperlyConfigured(
+                                "missing {} key in {} fixture binding configuration".format(e, argname))
+                    try:
+                        self.test_arg_fixture_binding_dict[instance_id][argname] = (func, scope, params)
                     except KeyError:
                         self.test_arg_fixture_binding_dict[instance_id] = {}
-                        self.test_arg_fixture_binding_dict[instance_id][argname] = fixture_config
+                        self.test_arg_fixture_binding_dict[instance_id][argname] = (func, scope, params)
                     if argname in metafunc.fixturenames:
-                        values.insert(0, fixture_config[0])
+                        values.insert(0, func)
                         if argname not in argnames:
                             argnames.insert(0, argname)
                     else:

@@ -1,15 +1,15 @@
 from setuptools import setup
 
 setup(name='pytest-scenario',
-      version='1.0a3',
+      version='1.0a4',
       description='pytest plugin for test scenarios',
       author='Ori Menashe',
       author_email='orim@live.com',
       url='https://github.com/OriMenashe/pytest-scenario',
-      download_url='https://github.com/OriMenashe/pytest-scenario/tarball/1.0a3',
+      download_url='https://github.com/OriMenashe/pytest-scenario/tarball/1.0a4',
       packages=['pytest_scenario'],
       entry_points={'pytest11': ['scenario = pytest_scenario.plugin']},
-      install_requires=['pytest>=2.3', 'pyfiglet==0.7.5'],
+      install_requires=['pytest>=2.3', 'pyfiglet==0.7.5', 'attrdict'],
       license='WTFPL',
       keywords=['testing', 'py.test', 'pytest', 'scenario'],
       classifiers=[
