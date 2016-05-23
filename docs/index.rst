@@ -49,7 +49,7 @@ Quickstart
 
 	*	Output:
 	
-	.. code-block:: bash
+	.. code-block:: shell
 		
     		first_fixture_place_holder: 100
     		second_fixture_place_holder: Hello World
@@ -87,13 +87,13 @@ Quickstart
 	
 	*	Output:
 	
-	.. code-block:: bash
+	.. code-block:: shell
 
     		collected 3 items 
     		selected scenario: 
     		                                                 _       
     		 _ __ ___  _   _   ___  ___ ___ _ __   __ _ _ __(_) ___  
-    		| '_ ` _ \| | | | / __|/ __/ _ \ '_ \ / _` | '__| |/ _ \ 
+    		| `_ ` _ \| | | | / __|/ __/ _ \ `_ \ / _` | `__| |/ _ \ 
     		| | | | | | |_| | \__ \ (_|  __/ | | | (_| | |  | | (_) |
     		|_| |_| |_|\__, | |___/\___\___|_| |_|\__,_|_|  |_|\___/ 
     		           |___/                                         
