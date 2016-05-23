@@ -82,7 +82,10 @@ class BaseRunner(object):
                 if scope and fixture_def.scope != scope:
                     fixture_def.finish()
                     fixture_def.scope = scope
-                item.funcargs[argname] = item._request.getfuncargvalue(func)
+                try:
+                    item.funcargs[argname] = item._request.getfuncargvalue(func)
+                except AttributeError as e:
+                    raise ImproperlyConfigured(', '.join([item.name, str(e)])) from None
         except KeyError as e:
             raise RuntimeError("unable to find a fixture function named {}".format(e))
 
@@ -156,6 +159,10 @@ class TestScenarioRunner(BaseRunner):
     def __init__(self, scenario_name: str):
         BaseRunner.__init__(self)
         self._name = scenario_name
+        self.tests_dict, _ = self.generate_test_plan(scenario_name)
+
+    def generate_test_plan(self, scenario_name, parent_ref='', order=0):
+        tests_dict = {}
         scenario_file_path = '{}/{}.json'.format(TEST_SCENARIOS_DIR, scenario_name)
         try:
             with open(scenario_file_path) as scenario_file:
@@ -164,43 +171,45 @@ class TestScenarioRunner(BaseRunner):
             raise RuntimeError("'{}' scenario is not defined (make sure {} is present)"
                                .format(scenario_name, abspath(scenario_file_path)))
         id_counter = set()
-        for test_instance in list(self.mark_order(scenario_config)):
-            assert "test_name" in test_instance and "id" in test_instance,\
-                "test case record in scenario '{}' is missing a test_name and \ or an id field.".format(scenario_name)
-            test_id = test_instance["id"]
+        for test_instance in scenario_config:
+            assert "id" in test_instance,\
+                "test case record in scenario '{}' is missing an id field.".format(scenario_name)
+            test_id = '-'.join([scenario_name, str(test_instance["id"])])
+            if parent_ref:
+                test_id = '/'.join([parent_ref, test_id])
             assert test_id not in id_counter,\
-                "found a duplicate test id {} in scenario '{}'".format(test_id, scenario_name)
+                "found a duplicate test id {} in scenario '{}'".format(test_instance["id"], scenario_name)
             id_counter.add(test_id)
-        self.tests_dict = {'%s.%s.%s[%d]' % (test_instance["module_name"],
-                                             test_instance["class_name"],
-                                             test_instance["test_name"],
-                                             test_instance["id"]): test_instance
-                           for test_instance in list(self.mark_order(scenario_config))}
-
-    @staticmethod
-    def mark_order(sequence):
-        order = 0
-        for i in sequence:
-            order += 1
-            i['order'] = order
-            yield i
+            if test_instance.get('@ref', None):
+                sub_scenario_tests, order = self.generate_test_plan(test_instance['@ref'], test_id, order)
+                tests_dict.update(sub_scenario_tests)
+            else:
+                assert "test_name" in test_instance,\
+                    "test case record in scenario '{}' is missing a test_name field.".format(scenario_name)
+                test_instance["id"] = test_id
+                order += 1
+                test_instance["order"] = order
+                tests_dict.update({'%s.%s.%s[%s]' % (test_instance["module_name"],
+                                                     test_instance["class_name"],
+                                                     test_instance["test_name"],
+                                                     test_id): test_instance})
+        return tests_dict, order
 
     def pytest_pycollect_makeitem(self, collector, name, obj):
-        tests_dict = collector.config._scenario.tests_dict
+        tests_dict = self.tests_dict
         if inspect.isfunction(obj) and name.startswith("test_") and isinstance(collector, pytest.Instance):
             fully_qualified_name = '.'.join([obj.__module__, obj.__qualname__])
             for test_id in tests_dict.keys():
-                if fully_qualified_name == re.sub('\[\d+\]$', '', test_id):
+                if fully_qualified_name == re.sub('\[.*?\]$', '', test_id):
                     return
             return []
 
     def pytest_collection_modifyitems(self, config, items):
-        tests_dict = config._scenario.tests_dict
         grouped_items = {}
         for item in items:
             fully_qualified_name = '.'.join([item.module.__name__, item.cls.__name__, item.name])
             try:
-                test = tests_dict[fully_qualified_name]
+                test = self.tests_dict[fully_qualified_name]
             except KeyError:
                 items.remove(item)
                 continue
@@ -240,9 +249,8 @@ class TestScenarioRunner(BaseRunner):
 
     def pytest_generate_tests(self, metafunc):
         fully_qualified_name = '.'.join([metafunc.module.__name__, metafunc.cls.__name__, metafunc.function.__name__])
-        tests_dict = metafunc.config._scenario.tests_dict
-        test_instances = [test for test in tests_dict.items()
-                          if fully_qualified_name == re.sub('\[\d+\]$', '', test[0])]
+        test_instances = [test for test in self.tests_dict.items()
+                          if fully_qualified_name == re.sub('\[.*?\]$', '', test[0])]
         idlist = []
         argnames = []
         argvalues = []

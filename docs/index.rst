@@ -74,16 +74,25 @@ Quickstart
     		====================================== test_fixture_param_persistency finished ======================================
 
 *	Test scenario is represented by a JSON file located at:
- 	<projects_root>/sut/scenarios/**<scenario_name>.json**
+	
+	.. code-block:: shell
+	
+ 		<projects_root>/sut/scenarios/<scenario_name>.json
+	Below is an example for a scenario named **"main scenario"**:
 
-	.. literalinclude:: ../sut/scenarios/my scenario.json
+	.. literalinclude:: ../sut/scenarios/main scenario.json
 		:language: json
 	
-	*	Invocation of a test scenario will be done as follows:
+	**"main scenario"** is referencing a second scenario named **"sub scenario"** (Nesting is supported):
+
+	.. literalinclude:: ../sut/scenarios/sub scenario.json
+		:language: json
+	
+	*	Invocation of a test scenario would be done as follows:
 
 	.. code-block:: shell
 		
-		~/workspace/projects_root$ py.test tests/ --scenario=<scenario_name>
+		~/workspace/projects_root$ py.test tests/ --scenario="main scenario"
 	
 	*	Output:
 	
@@ -91,32 +100,32 @@ Quickstart
 
     		collected 3 items 
     		selected scenario: 
-    		                                                 _       
-    		 _ __ ___  _   _   ___  ___ ___ _ __   __ _ _ __(_) ___  
-    		| `_ ` _ \| | | | / __|/ __/ _ \ `_ \ / _` | `__| |/ _ \ 
-    		| | | | | | |_| | \__ \ (_|  __/ | | | (_| | |  | | (_) |
-    		|_| |_| |_|\__, | |___/\___\___|_| |_|\__,_|_|  |_|\___/ 
-    		           |___/                                         
-    		
-    		tests/test_parametrize.py::TestParametrize::test_scenario_instantiation[1] 
+    		                 _                                       _       
+    		 _ __ ___   __ _(_)_ __    ___  ___ ___ _ __   __ _ _ __(_) ___  
+    		| `_ ` _ \ / _` | | `_ \  / __|/ __/ _ \ `_ \ / _` | `__| |/ _ \ 
+    		| | | | | | (_| | | | | | \__ \ (_|  __/ | | | (_| | |  | | (_) |
+    		|_| |_| |_|\__,_|_|_| |_| |___/\___\___|_| |_|\__,_|_|  |_|\___/ 
+                                                                 
+
+    		tests/test_parametrize.py::TestParametrize::test_scenario_instantiation[main scenario-1] 
     		
     		Hello World
     		PASSED
-    		====================================== test_scenario_instantiation[1] finished ======================================
+    		=============================== test_scenario_instantiation[main scenario-1] finished ===============================
     		    		
     		
-    		tests/test_parametrize.py::TestParametrize::test_scenario_instantiation[2] 
+    		tests/test_parametrize.py::TestParametrize::test_scenario_instantiation[main scenario-2/sub scenario-1] 
     		
     		Hello Bob
     		PASSED
-    		====================================== test_scenario_instantiation[2] finished ======================================
+    		======================= test_scenario_instantiation[main scenario-2/sub scenario-1] finished ========================
     		
     		
-    		tests/test_parametrize.py::TestParametrize::test_scenario_instantiation[3] 
+    		tests/test_parametrize.py::TestParametrize::test_scenario_instantiation[main scenario-2/sub scenario-2] 
     		
     		Bye Bob
     		PASSED
-    		====================================== test_scenario_instantiation[3] finished ======================================
+    		======================= test_scenario_instantiation[main scenario-2/sub scenario-2] finished ========================
 
 License
 -------

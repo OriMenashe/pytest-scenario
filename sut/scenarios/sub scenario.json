@@ -7,26 +7,7 @@
         "fixture_binding": {
             "fixture_place_holder": {
                 "func": "string_parametrized_fixture",
-                "scope": "session",
-                "params": {
-                    "string": "Hello"
-                }
-            }
-        },
-        "test_params": {
-            "test_param": "World"
-        },
-        "skip": false,
-        "xfail": false
-    },
-    {
-        "id": 2,
-        "module_name": "tests.test_parametrize",
-        "class_name": "TestParametrize",
-        "test_name": "test_scenario_instantiation",
-        "fixture_binding": {
-            "fixture_place_holder": {
-                "func": "string_parametrized_fixture"
+                "scope": "session"
             }
         },
         "test_params": {
@@ -36,7 +17,7 @@
         "xfail": false
     },
     {
-        "id": 3,
+        "id": 2,
         "module_name": "tests.test_parametrize",
         "class_name": "TestParametrize",
         "test_name": "test_scenario_instantiation",
