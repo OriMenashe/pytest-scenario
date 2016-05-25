@@ -77,7 +77,8 @@ Quickstart
 	
 	.. code-block:: shell
 	
- 		<projects_root>/sut/scenarios/<scenario_name>.json
+		<projects_root>/sut/scenarios/<scenario_name>.json
+		
 	Below is an example for a scenario named **"main scenario"**:
 
 	.. literalinclude:: ../sut/scenarios/main scenario.json
@@ -114,18 +115,18 @@ Quickstart
     		=============================== test_scenario_instantiation[main scenario-1] finished ===============================
     		    		
     		
-    		tests/test_parametrize.py::TestParametrize::test_scenario_instantiation[main scenario-2/sub scenario-1] 
+    		tests/test_parametrize.py::TestParametrize::test_scenario_instantiation[main scenario-2.sub scenario-1] 
     		
     		Hello Bob
     		PASSED
-    		======================= test_scenario_instantiation[main scenario-2/sub scenario-1] finished ========================
+    		======================= test_scenario_instantiation[main scenario-2.sub scenario-1] finished ========================
     		
     		
-    		tests/test_parametrize.py::TestParametrize::test_scenario_instantiation[main scenario-2/sub scenario-2] 
+    		tests/test_parametrize.py::TestParametrize::test_scenario_instantiation[main scenario-2.sub scenario-2] 
     		
     		Bye Bob
     		PASSED
-    		======================= test_scenario_instantiation[main scenario-2/sub scenario-2] finished ========================
+    		======================= test_scenario_instantiation[main scenario-2.sub scenario-2] finished ========================
 
 License
 -------
