@@ -176,7 +176,7 @@ class TestScenarioRunner(BaseRunner):
                 "test case record in scenario '{}' is missing an id field.".format(scenario_name)
             test_id = '-'.join([scenario_name, str(test_instance["id"])])
             if parent_ref:
-                test_id = '/'.join([parent_ref, test_id])
+                test_id = '.'.join([parent_ref, test_id])
             assert test_id not in id_counter,\
                 "found a duplicate test id {} in scenario '{}'".format(test_instance["id"], scenario_name)
             id_counter.add(test_id)
