@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='pytest-scenario',
-      version='1.0a5',
+      version='1.0a6',
       description='pytest plugin for test scenarios',
       author='Ori Menashe',
       author_email='orim@live.com',

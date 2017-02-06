@@ -3,6 +3,8 @@ import re
 import pytest
 import json
 import inspect
+import itertools
+import sys
 from attrdict import AttrDict
 from pyfiglet import figlet_format
 from pytest_scenario.exceptions import ImproperlyConfigured
@@ -14,6 +16,8 @@ TEST_SCENARIOS_DIR = './sut/scenarios'
 def pytest_addoption(parser):
     parser.addoption("--scenario", action="store", dest='scenario_name', metavar='name',
                      help="states the scenario that should be tested")
+    parser.addoption("--repeat", action="store", default=1,
+                     help="run all tests collected in a loop (default is 1 | infinite 0)")
 
 
 def pytest_configure(config):
@@ -83,14 +87,32 @@ class BaseRunner(object):
                     fixture_def.finish()
                     fixture_def.scope = scope
                 try:
+                    if not item._request:
+                        item._initrequest()
                     item.funcargs[argname] = item._request.getfuncargvalue(func)
                 except AttributeError as e:
-                    raise ImproperlyConfigured(', '.join([item.name, str(e)])) from None
+                    raise ImproperlyConfigured(', '.join([item.name, str(e)])) from e
         except KeyError as e:
             raise RuntimeError("unable to find a fixture function named {}".format(e))
 
     def pytest_collection_finish(self, session):
         self.tw = session.config.pluginmanager.getplugin('terminalreporter')._tw
+
+    def pytest_runtestloop(self, session):
+        try:
+            repeat = int(session.config.option.repeat)
+        except AttributeError:
+            return
+        assert isinstance(repeat, int), "Repeat must be an integer"
+        for i in itertools.count():
+            if i == repeat and i != 0:
+                break
+            if repeat == 0:
+                self.tw.write("repetition count: %d of %d\n" % (i+1, sys.maxsize), bold=True)
+            elif repeat != 1:
+                self.tw.write("repetition count: %d of %d\n" % (i+1, repeat), bold=True)
+            session.config.pluginmanager.getplugin("main").pytest_runtestloop(session)
+        return True
 
     def pytest_runtest_teardown(self, item, nextitem):
         self.tw.write('\n')
@@ -151,7 +173,7 @@ class TestCaseRunner(BaseRunner):
                         "(argname, fixture, scope, params=None)".format(fully_qualified_name))
             except KeyError:
                 pass
-            metafunc.parametrize(argnames, [values], ids=[self.id_counter], scope="function")
+            metafunc.parametrize(argnames, [values], ids=[str(self.id_counter)], scope="function")
 
 
 class TestScenarioRunner(BaseRunner):
@@ -257,7 +279,12 @@ class TestScenarioRunner(BaseRunner):
         try:
             params = test_instances[0][1]['test_params'].items()
         except KeyError:
-            raise ImproperlyConfigured('missing params field in {} configuration'.format(test_instances[0]))
+            try:
+                source_el = 'scenario %s' % re.search('.*?\[(.*?)\]', test_instances[0][0]).group(1)
+            except AttributeError:
+                # should never happen
+                source_el = test_instances[0][0]
+            raise ImproperlyConfigured('missing \'test_params\' field in {} configuration'.format(source_el))
         for argname, _ in params:
             if argname in metafunc.fixturenames:
                 argnames.append(argname)
